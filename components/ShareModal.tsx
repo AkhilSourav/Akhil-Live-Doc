@@ -9,9 +9,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-
 import { useSelf } from '@liveblocks/react/suspense';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button } from "./ui/button";
 import Image from "next/image";
 import { Label } from "./ui/label";
@@ -20,25 +19,37 @@ import UserTypeSelector from "./UserTypeSelector";
 import Collaborator from "./Collaborator";
 import { updateDocumentAccess } from "@/lib/actions/room.actions";
 
-const ShareModal = ({ roomId, collaborators, creatorId, currentUserType }: ShareDocumentDialogProps) => {
+const ShareModal = ({ roomId, collaborators, creatorId, currentUserType, missingEmails }: ShareDocumentDialogProps) => {
   const user = useSelf();
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [email, setEmail] = useState('');
   const [userType, setUserType] = useState<UserType>('viewer');
 
+  // State to handle temporary error visibility
+  const [visibleErrors, setVisibleErrors] = useState<string[]>(missingEmails || []);
+
+  useEffect(() => {
+    if (missingEmails?.length > 0) {
+      setVisibleErrors(missingEmails);
+      // Hide error after 5 seconds
+      const timer = setTimeout(() => {
+        setVisibleErrors([]);
+      }, 5000);
+
+      return () => clearTimeout(timer); // Cleanup on unmount
+    }
+  }, [missingEmails]);
+
   const shareDocumentHandler = async () => {
     setLoading(true);
-
     await updateDocumentAccess({ 
       roomId, 
       email, 
       userType: userType as UserType, 
       updatedBy: user.info,
     });
-
     setLoading(false);
   }
 
@@ -53,11 +64,10 @@ const ShareModal = ({ roomId, collaborators, creatorId, currentUserType }: Share
             height={20}
             className="min-w-4 md:size-5"
           />
-          <p className="mr-1 hidden sm:block">
-            Share
-          </p>
+          <p className="mr-1 hidden sm:block">Share</p>
         </Button>
       </DialogTrigger>
+      
       <DialogContent className="shad-dialog">
         <DialogHeader>
           <DialogTitle>Manage who can view this project</DialogTitle>
@@ -87,6 +97,18 @@ const ShareModal = ({ roomId, collaborators, creatorId, currentUserType }: Share
           </Button>
         </div>
 
+        {/* Temporary error message - disappears after 5 seconds */}
+        {visibleErrors?.length > 0 && (
+          <div className="mt-4 p-3 bg-red-100 text-red-800 rounded animate-fade-out">
+            ⚠️ Below email(s) not found. Please check and try again:
+            <ul className="mt-1 text-sm">
+              {visibleErrors.map((email) => (
+                <li key={email} className="ml-2">• {email}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="my-2 space-y-2">
           <ul className="flex flex-col">
             {collaborators.map((collaborator) => (
@@ -106,4 +128,4 @@ const ShareModal = ({ roomId, collaborators, creatorId, currentUserType }: Share
   )
 }
 
-export default ShareModal
+export default ShareModal;

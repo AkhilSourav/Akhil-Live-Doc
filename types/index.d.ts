@@ -48,6 +48,7 @@ declare type SearchParamProps = {
     collaborators: User[];
     creatorId: string;
     currentUserType: UserType;
+    missingEmails: string[];
   };
   
   declare type HeaderProps = {
@@ -68,6 +69,7 @@ declare type SearchParamProps = {
     roomMetadata: RoomMetadata;
     users: User[];
     currentUserType: UserType;
+    missingEmails: string[];
   };
   
   declare type AddDocumentBtnProps = {
