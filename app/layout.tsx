@@ -5,7 +5,7 @@ import { Metadata } from "next"
 import { ClerkProvider } from "@clerk/nextjs"
 import { dark } from "@clerk/themes"
 import Provider from "./Provider"
-
+import { Analytics } from '@vercel/analytics/next';
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -37,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           >
             <Provider>
               {children}
+              <Analytics />
             </Provider>
           </body>
         </html>
