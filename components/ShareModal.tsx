@@ -75,6 +75,7 @@ const ShareModal = ({ roomId, collaborators, creatorId, currentUserType }: Share
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="share-input"
+              autoComplete="off"
             />
             <UserTypeSelector 
               userType={userType}
