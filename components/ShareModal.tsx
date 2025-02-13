@@ -31,16 +31,18 @@ const ShareModal = ({ roomId, collaborators, creatorId, currentUserType, missing
   const [visibleErrors, setVisibleErrors] = useState<string[]>(missingEmails || []);
 
   useEffect(() => {
-    if (missingEmails?.length > 0) {
-      setVisibleErrors(missingEmails);
-      // Hide error after 5 seconds
-      const timer = setTimeout(() => {
-        setVisibleErrors([]);
-      }, 5000);
+  if (missingEmails?.length > 0) {
+    // Remove duplicates
+    setVisibleErrors(Array.from(new Set(missingEmails)));
 
-      return () => clearTimeout(timer); // Cleanup on unmount
-    }
-  }, [missingEmails]);
+    // Hide error after 5 seconds
+    const timer = setTimeout(() => {
+      setVisibleErrors([]);
+    }, 5000);
+
+    return () => clearTimeout(timer); // Cleanup on unmount or change
+  }
+}, [JSON.stringify(missingEmails)]);  // Use JSON.stringify to track deep changes
 
   const shareDocumentHandler = async () => {
     setLoading(true);
