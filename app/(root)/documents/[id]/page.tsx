@@ -1,6 +1,6 @@
 import CollaborativeRoom from "@/components/CollaborativeRoom";
 import { getDocument } from "@/lib/actions/room.actions";
-import { getClerkUsers } from "@/lib/actions/user.actions";
+import { getClerkUsers, getMissingClerkUsers } from "@/lib/actions/user.actions";
 import { parseStringify } from "@/lib/utils";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
@@ -19,9 +19,13 @@ const Document = async ({ params: { id } }: SearchParamProps) => {
   const userIds = Object.keys(room.usersAccesses);
   
   // Fetch users and missing emails
-  const { sortedUsers, missingEmails } = await getClerkUsers({ userIds });
+  const  sortedUsers  = await getClerkUsers({ userIds });
 
-  const usersData = parseStringify(sortedUsers).map((user: User) => ({
+  const missingUsers = await getMissingClerkUsers({ userIds });
+
+  const missingEmails = missingUsers.map((user: User) => user.email);
+
+  const usersData = sortedUsers.map((user: User) => ({
     ...user,
     userType: room.usersAccesses[user.email]?.includes("room:write")
       ? "editor"

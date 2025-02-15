@@ -4,37 +4,54 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { parseStringify } from "../utils";
 import { liveblocks } from "../liveblocks";
 
-export const getClerkUsers = async ({ userIds }: { userIds: string[] }) => {
-    const clerk = await clerkClient();
-    const { data } = await clerk.users.getUserList({
-        emailAddress: userIds,
-    });
+export const getMissingClerkUsers = async ({ userIds }: { userIds: string[] }) => {
+    try {
+        const clerk = await clerkClient();
+        const { data } = await clerk.users.getUserList({
+            emailAddress: userIds,
+        });
 
-    const users = data.map((user) => ({
-        id: user.id,
-        name: `${user.firstName} ${user.lastName}`,
-        email: user.emailAddresses[0].emailAddress,
-        avatar: user.imageUrl,
-    }));
+        const users = data.map((user) => ({
+            id: user.id,
+            name: `${user.firstName} ${user.lastName}`,
+            email: user.emailAddresses[0].emailAddress,
+            avatar: user.imageUrl,
+        }));
 
-    const sortedUsers: { id: string; name: string; email: string; avatar: string }[] = [];
-    const missingEmails: string[] = [];
+        // Filter out emails that do exist, and map missing ones to a default object.
+        const missingUsers = userIds
+            .filter((email) => !users.some((user) => user.email === email))
+            .map((email) => ({ id: email, name: "Anonymous", email, avatar: "", color: "" }));
 
-    userIds.forEach((email) => {
-        const user = users.find((user) => user.email === email);
-        if (user) {
-            sortedUsers.push(user);
-        } else {
-            console.error(`Email not found: ${email}`);
-            missingEmails.push(email); // Store missing emails
-        }
-    });
-
-    console.log("sortedUsers", sortedUsers);
-    
-    // Return both found users and missing emails
-    return { sortedUsers, missingEmails };
+        return parseStringify(missingUsers);
+    } catch (error) {
+        console.log(`Error fetching users: ${error}`);
+    }
 };
+
+
+export const getClerkUsers = async ({ userIds }: { userIds: string[] }) => {
+    try {
+        const clerk = await clerkClient();
+        const { data } = await clerk.users.getUserList({
+            emailAddress: userIds,
+        });
+        const users = data.map((user) => ({
+            id: user.id,
+            name: `${user.firstName} ${user.lastName}`,
+            email: user.emailAddresses[0].emailAddress,
+            avatar: user.imageUrl,
+        }));
+        const sortedUsers = userIds
+            .map((email) => users.find((user) => user.email === email))
+            .filter((user) => user !== undefined);
+        return parseStringify(sortedUsers);
+    } catch (error) {
+        console.log(`Error fetching users: ${error}`);
+    }
+};
+
+
 
 export const getDocumentUsers = async ({roomId, currentUser, text}: {roomId: string, currentUser: string, text: string}) => {
     try{
